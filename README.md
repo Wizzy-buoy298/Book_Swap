@@ -81,13 +81,13 @@ brew install podman
 ```
 {
   "canisters": {
-    "day_care": {
+    "book_swap": {
       "type": "custom",
       "main": "src/index.ts",
       "candid": "src/index.did",
       "candid_gen": "http",
-      "build": "npx azle day_care",
-      "wasm": ".azle/day_care/day_care.wasm",
+      "build": "npx azle book_swap",
+      "wasm": ".azle/book_swap/book_swap.wasm",
       "gzip": true,
       "metadata": [
         {
@@ -105,13 +105,13 @@ brew install podman
 
 ```
 
-where `day_care` is the name of the canister.
+where `book_swap` is the name of the canister.
 
 6. Create a `package.json` with the next content and run `npm i`:
 
 ```
 {
-  "name": "day_care",
+  "name": "book_swap",
   "version": "0.1.0",
   "description": "Internet Computer message board application",
   "dependencies": {
@@ -166,7 +166,7 @@ On the other hand, you can interact with the canister using `dfx` via CLI:
 
 - `dfx canister id <CANISTER_NAME>`
   Example:
-- `dfx canister id day_care`
+- `dfx canister id book_swap`
   Response:
 
 ```
