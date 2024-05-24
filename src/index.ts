@@ -1,7 +1,32 @@
-// Import necessary libraries
 import { v4 as uuidv4 } from "uuid";
-import { Server, StableBTreeMap, Principal } from "azle";
-import express from "express";
+import { Server, StableBTreeMap } from "azle";
+import express, { Request, Response } from "express";
+
+// Define TypeScript interfaces for request bodies
+interface CreateUserRequest {
+  name: string;
+  email: string;
+}
+
+interface CreateBookRequest {
+  userId: string;
+  title: string;
+  author: string;
+  description: string;
+}
+
+interface CreateSwapRequest {
+  bookId: string;
+  requestedById: string;
+  status: string;
+}
+
+interface CreateFeedbackRequest {
+  userId: string;
+  swapRequestId: string;
+  rating: number;
+  comment: string;
+}
 
 // Define the User class to represent users of the platform
 class User {
@@ -79,19 +104,20 @@ const booksStorage = StableBTreeMap<string, Book>(1);
 const swapRequestsStorage = StableBTreeMap<string, SwapRequest>(2);
 const feedbackStorage = StableBTreeMap<string, Feedback>(3);
 
+// Utility function to validate request body
+const validateRequestBody = (body: any, requiredFields: string[]): boolean => {
+  return requiredFields.every((field) => body[field] !== undefined && body[field] !== null);
+};
+
 // Define the express server
 export default Server(() => {
   const app = express();
   app.use(express.json());
 
   // Endpoint for creating a new user
-  app.post("/users", (req, res) => {
-    if (
-      !req.body.name ||
-      typeof req.body.name !== "string" ||
-      !req.body.email ||
-      typeof req.body.email !== "string"
-    ) {
+  app.post("/users", (req: Request<{}, {}, CreateUserRequest>, res: Response) => {
+    const { name, email } = req.body;
+    if (!validateRequestBody(req.body, ["name", "email"])) {
       res.status(400).json({
         error: "Invalid input: Ensure 'name' and 'email' are provided and are strings.",
       });
@@ -99,10 +125,7 @@ export default Server(() => {
     }
 
     try {
-      const user = new User(
-        req.body.name,
-        req.body.email
-      );
+      const user = new User(name, email);
       usersStorage.insert(user.id, user);
       res.status(201).json({
         message: "User created successfully",
@@ -117,7 +140,7 @@ export default Server(() => {
   });
 
   // Endpoint for retrieving all users
-  app.get("/users", (req, res) => {
+  app.get("/users", (req: Request, res: Response) => {
     try {
       const users = usersStorage.values();
       res.status(200).json({
@@ -133,17 +156,9 @@ export default Server(() => {
   });
 
   // Endpoint for creating a new book
-  app.post("/books", (req, res) => {
-    if (
-      !req.body.userId ||
-      typeof req.body.userId !== "string" ||
-      !req.body.title ||
-      typeof req.body.title !== "string" ||
-      !req.body.author ||
-      typeof req.body.author !== "string" ||
-      !req.body.description ||
-      typeof req.body.description !== "string"
-    ) {
+  app.post("/books", (req: Request<{}, {}, CreateBookRequest>, res: Response) => {
+    const { userId, title, author, description } = req.body;
+    if (!validateRequestBody(req.body, ["userId", "title", "author", "description"])) {
       res.status(400).json({
         error: "Invalid input: Ensure 'userId', 'title', 'author', and 'description' are provided and are of the correct types.",
       });
@@ -151,12 +166,7 @@ export default Server(() => {
     }
 
     try {
-      const book = new Book(
-        req.body.userId,
-        req.body.title,
-        req.body.author,
-        req.body.description
-      );
+      const book = new Book(userId, title, author, description);
       booksStorage.insert(book.id, book);
       res.status(201).json({
         message: "Book created successfully",
@@ -171,7 +181,7 @@ export default Server(() => {
   });
 
   // Endpoint for retrieving all books
-  app.get("/books", (req, res) => {
+  app.get("/books", (req: Request, res: Response) => {
     try {
       const books = booksStorage.values();
       res.status(200).json({
@@ -187,15 +197,9 @@ export default Server(() => {
   });
 
   // Endpoint for creating a new swap request
-  app.post("/swapRequests", (req, res) => {
-    if (
-      !req.body.bookId ||
-      typeof req.body.bookId !== "string" ||
-      !req.body.requestedById ||
-      typeof req.body.requestedById !== "string" ||
-      !req.body.status ||
-      typeof req.body.status !== "string"
-    ) {
+  app.post("/swapRequests", (req: Request<{}, {}, CreateSwapRequest>, res: Response) => {
+    const { bookId, requestedById, status } = req.body;
+    if (!validateRequestBody(req.body, ["bookId", "requestedById", "status"])) {
       res.status(400).json({
         error: "Invalid input: Ensure 'bookId', 'requestedById', and 'status' are provided and are of the correct types.",
       });
@@ -203,11 +207,7 @@ export default Server(() => {
     }
 
     try {
-      const swapRequest = new SwapRequest(
-        req.body.bookId,
-        req.body.requestedById,
-        req.body.status
-      );
+      const swapRequest = new SwapRequest(bookId, requestedById, status);
       swapRequestsStorage.insert(swapRequest.id, swapRequest);
       res.status(201).json({
         message: "Swap request created successfully",
@@ -222,7 +222,7 @@ export default Server(() => {
   });
 
   // Endpoint for retrieving all swap requests
-  app.get("/swapRequests", (req, res) => {
+  app.get("/swapRequests", (req: Request, res: Response) => {
     try {
       const swapRequests = swapRequestsStorage.values();
       res.status(200).json({
@@ -238,17 +238,9 @@ export default Server(() => {
   });
 
   // Endpoint for creating a new feedback
-  app.post("/feedback", (req, res) => {
-    if (
-      !req.body.userId ||
-      typeof req.body.userId !== "string" ||
-      !req.body.swapRequestId ||
-      typeof req.body.swapRequestId !== "string" ||
-      !req.body.rating ||
-      typeof req.body.rating !== "number" ||
-      !req.body.comment ||
-      typeof req.body.comment !== "string"
-    ) {
+  app.post("/feedback", (req: Request<{}, {}, CreateFeedbackRequest>, res: Response) => {
+    const { userId, swapRequestId, rating, comment } = req.body;
+    if (!validateRequestBody(req.body, ["userId", "swapRequestId", "rating", "comment"])) {
       res.status(400).json({
         error: "Invalid input: Ensure 'userId', 'swapRequestId', 'rating', and 'comment' are provided and are of the correct types.",
       });
@@ -256,12 +248,7 @@ export default Server(() => {
     }
 
     try {
-      const feedback = new Feedback(
-        req.body.userId,
-        req.body.swapRequestId,
-        req.body.rating,
-        req.body.comment
-      );
+      const feedback = new Feedback(userId, swapRequestId, rating, comment);
       feedbackStorage.insert(feedback.id, feedback);
       res.status(201).json({
         message: "Feedback created successfully",
@@ -276,7 +263,7 @@ export default Server(() => {
   });
 
   // Endpoint for retrieving all feedback
-  app.get("/feedback", (req, res) => {
+  app.get("/feedback", (req: Request, res: Response) => {
     try {
       const feedback = feedbackStorage.values();
       res.status(200).json({
